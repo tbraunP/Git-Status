@@ -145,7 +145,22 @@ def show_error(error="Undefined Error!"):
     sys.stderr.write(error)
     sys.exit(1)
     
-    
+#-------------------    
+def collectGitRecursive():
+#-------------------
+	counter = 0;
+	folders = glob.glob( os.path.join(options.dirname, '*') );
+	gitFolders = [];
+	while counter < len(folders):
+		infile = folders[counter];
+		counter +=1;
+		# print "file %s" % infile;
+		if os.path.exists( os.path.join(infile, ".git") ):
+			gitFolders.append(infile);
+		else:
+			folders.extend(glob.glob( os.path.join(infile, '*') ));			
+   	return gitFolders;
+
 #-------------------
 # Now, onto the main event!
 #-------------------
@@ -164,7 +179,8 @@ if __name__ == "__main__":
     dirties = 0
 
     # See whats here
-    for infile in glob.glob( os.path.join(options.dirname, '*') ):
+    gitFolders = collectGitRecursive();
+    for infile in gitFolders:	
 
         #is there a .git file
         if os.path.exists( os.path.join(infile, ".git") ):
