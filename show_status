@@ -135,6 +135,15 @@ parser.add_option("-b", "--branch",
                 help        = "Warn if not on this branch"
                 )
 
+parser.add_option("-i", "--ignore-branch",
+                action      = "store_true",
+                dest        = "ignorebranch",
+                default     = False,
+                help        = "Use current branch"
+                )
+
+
+
 # Now, parse the args
 (options, args) = parser.parse_args()
     
@@ -194,42 +203,45 @@ if __name__ == "__main__":
             
             # Mini?
             if not options.verbose:
-                if options.relative:
-                    infile = os.path.relpath(infile, options.dirname)
-		messages = []
-                clean = True
-		can_push = False
-                can_pull = True
-                if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
-                    messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
-                    can_pull = False
-                    clean = False
-                if 'nothing to commit' in out:
+					if options.relative:
+						infile = os.path.relpath(infile, options.dirname)
+            messages = []
+            clean = True
+            can_push = False
+            can_pull = True
+            if not options.ignorebranch:
+               if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
+                     messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
+                     can_pull = False
+                     clean = False
+                
+            if 'nothing to commit' in out:
                     messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
                     can_push = True
-                elif 'nothing added to commit but untracked files present' in out:
+            elif 'nothing added to commit but untracked files present' in out:
                     messages.append(bc.WARNING + "Untracked files" + bc.ENDC)
                     can_push = True
                     clean = False
-                else:
+            else:
                     messages.append(bc.FAIL + "Changes" + bc.ENDC)
                     can_pull = False
                     clean = False
-                if 'Your branch is ahead of' in out:
+            
+            if 'Your branch is ahead of' in out:
                     messages.append(bc.FAIL + "Unpushed commits" + bc.ENDC)
                     can_pull = False
                     clean = False
-                else:
+            else:
                     can_push = False
 
-                if clean:
+            if clean:
                     if options.hide_clean:
                         continue
                     messages = [bc.OKGREEN + "Clean" + bc.ENDC]
-                else:
+            else:
                     dirties += 1
 
-                if can_push and options.push:
+            if can_push and options.push:
                     # Push to the remote  
                     push = commands.getoutput(
                         'cd '+ infile + 
@@ -241,7 +253,7 @@ if __name__ == "__main__":
                     else:
                         messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
 
-                if can_pull and options.pull:
+            if can_pull and options.pull:
                     # Pull from the remote
                     pull = commands.getoutput(
                         'cd '+ infile +
@@ -256,8 +268,8 @@ if __name__ == "__main__":
                         messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
                     else:
                         messages.append("Pulled")
-                # Write to screen
-                if not options.count:
+            # Write to screen
+            if not options.count:
                     sys.stdout.write("-- " + infile.ljust(options.align) + " : ")
                     sys.stdout.write(", ".join(messages) + "\n")
                     sys.stdout.flush()
