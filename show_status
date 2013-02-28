@@ -258,7 +258,7 @@ if __name__ == "__main__":
                         messages.append("Pulled")
                 # Write to screen
                 if not options.count:
-                    sys.stdout.write("--" + infile.ljust(options.align) + ": ")
+                    sys.stdout.write("-- " + infile.ljust(options.align) + " : ")
                     sys.stdout.write(", ".join(messages) + "\n")
                     sys.stdout.flush()
             else:
