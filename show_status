@@ -86,6 +86,13 @@ parser.add_option("-p", "--pull",
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
 
+parser.add_option("--check",
+                action      = "store_true", 
+                dest        = "checkRemoteChanges", 
+                default     = False,
+                help        = "Do a 'git fetch' and check for changes on the remote repository (if you've set a remote with -r it will fetch from there)"
+                )
+
 parser.add_option("-c", "--clear",
                 action      = "store_true",
                 dest        = "clear",
@@ -214,7 +221,7 @@ if __name__ == "__main__":
                      messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
                      can_pull = False
                      clean = False
-                
+                           
             if 'nothing to commit' in out:
                     messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
                     can_push = True
@@ -252,6 +259,31 @@ if __name__ == "__main__":
                         messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
                     else:
                         messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
+
+            if can_pull and options.checkRemoteChanges:
+                    # Fetch from the remote
+                    check = commands.getoutput(
+                        'cd '+ infile +
+                        '; LC_ALL=C git fetch '+ 
+                        ' '.join(options.remote.split(":")) 
+                    )
+
+                    lookHere = 'origin/master';
+                    if len(options.remote)>0:
+                        lookHere = '/'.join(options.remote.split(":"));
+                    outputCompare = commands.getoutput(
+                        'cd '+ infile +
+                        '; LC_ALL=C git log HEAD.. '+ lookHere
+                        + ' --oneline' 
+                    )
+                    # check if lookHere is ahead
+                    ahead=len(outputCompare.split('\n'));
+                    letters = len(outputCompare);
+                    #print outputCompare + ' ' +str(ahead);
+                    if (ahead == 1) and (letters == 0):
+                        messages.append(bc.OKGREEN + "No pull necessary"+ bc.ENDC)
+                    else:
+                        messages.append(bc.FAIL + lookHere + " is " + str(ahead) + ' commits ahead' + bc.ENDC)
 
             if can_pull and options.pull:
                     # Pull from the remote
